@@ -1,3 +1,4 @@
 streamlit
 pandas
 matplotlib
+nanum-fonts  # (Streamlit Cloud에서 한글 지원용)
