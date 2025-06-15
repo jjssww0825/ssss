@@ -27,6 +27,8 @@ def analyze_spending(spending_data, monthly_budget):
             tips.append("쇼핑 지출이 높습니다. 충동구매를 줄이도록 노력해보세요.")
         elif item['category'] == "식비" and item['amount'] > 200000:
             tips.append("식비가 많은 편입니다. 외식보다는 집밥을 고려해보세요.")
+        elif item['category'] == "여가" and item['amount'] > 100000:
+            tips.append("여가 활동 지출이 높습니다. 무료 또는 저비용 활동도 고려해보세요.")
 
     return tips
 
@@ -58,7 +60,7 @@ if spending_data and sum([item['amount'] for item in spending_data]) > 0:
         labels=df['category'],
         autopct='%1.1f%%',
         startangle=90,
-        textprops={'fontproperties': fontprop, 'fontsize': 12}  # ✅ 폰트 크기 지정
+        textprops={'fontproperties': fontprop, 'fontsize': 12}
     )
     for text in texts + autotexts:
         text.set_fontproperties(fontprop)
