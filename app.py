@@ -51,14 +51,17 @@ for category in categories:
 st.subheader("📈 지출 비율 시각화")
 if spending_data and sum([item['amount'] for item in spending_data]) > 0:
     df = pd.DataFrame(spending_data)
+    df = df[df['amount'] > 0]  # ✅ 0원 항목 제거
     fig, ax = plt.subplots()
     wedges, texts, autotexts = ax.pie(
         df['amount'],
         labels=df['category'],
         autopct='%1.1f%%',
         startangle=90,
-        textprops={'fontproperties': fontprop}  # ✅ 한글 폰트 적용
+        textprops={'fontproperties': fontprop, 'fontsize': 12}  # ✅ 폰트 크기 지정
     )
+    for text in texts + autotexts:
+        text.set_fontproperties(fontprop)
     ax.axis('equal')  # 원형 유지
     st.pyplot(fig)
 else:
