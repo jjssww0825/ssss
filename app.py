@@ -52,37 +52,6 @@ def get_advice(username):
     tips = analyze_spending(user)
     return jsonify({"advice": tips})
 
-if __name__ == "__main__":
-    app.run(debug=True)
-
-
-# 📁 프로젝트 구조 예시 (GitHub 업로드 시)
-
-# 프로젝트 루트
-# ├── app.py                   # Flask 백엔드 서버 코드
-# ├── templates/              # HTML 템플릿 폴더 (웹 프론트와 연동 시 사용)
-# │   └── index.html
-# ├── static/                 # CSS/JS 파일 폴더
-# ├── requirements.txt        # 의존성 패키지 리스트
-# └── README.md               # 프로젝트 설명 파일
-
-# requirements.txt 예시
-# Flask==2.3.2
-
-# README.md 예시
-# """
-# ## 소비 중심 자산 관리 로보어드바이저
-# Flask를 기반으로 사용자의 소비 데이터를 분석하고, 소비 습관에 맞는 조언을 제공하는 웹 API 서비스입니다.
-
-# ### 기능
-# - 사용자 자산 및 소비 패턴 분석
-# - 소비 습관에 대한 피드백 제공
-# - API 형태로 조언 전달
-
-# ### 실행 방법
-# ```bash
-# pip install -r requirements.txt
-# python app.py
-# ```
-# 브라우저에서 http://localhost:5000/advice/user1 접속
-# """
+# 로컬 실행 시만 사용 (배포 환경에서는 제외)
+# if __name__ == "__main__":
+#     app.run(debug=True)
