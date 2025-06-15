@@ -1,4 +1,6 @@
 import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
 
 # 소비 조언 생성 함수
 def analyze_spending(spending_data, monthly_budget):
@@ -32,13 +34,25 @@ st.write(f"### 💰 이번 달 예산: {monthly_budget:,}원")
 
 # 사용자 입력을 받아 소비 내역 구성
 st.subheader("📊 소비 내역 입력")
-categories = ["식비", "카페", "쇼핑", "교통", "엔터테인먼트", "기타"]
+categories = ["식비", "카페", "쇼핑", "교통", "기타"]
 spending_data = []
 
 for category in categories:
     amount = st.number_input(f"{category} 지출 (원)", min_value=0, step=1000, key=category)
     spending_data.append({"category": category, "amount": amount})
 
+# 시각화: 원형 그래프
+st.subheader("📈 지출 비율 시각화")
+if spending_data and sum([item['amount'] for item in spending_data]) > 0:
+    df = pd.DataFrame(spending_data)
+    fig, ax = plt.subplots()
+    ax.pie(df['amount'], labels=df['category'], autopct='%1.1f%%', startangle=90)
+    ax.axis('equal')  # 원형 유지
+    st.pyplot(fig)
+else:
+    st.info("지출 금액을 입력하면 그래프가 표시됩니다.")
+
+# 소비 조언 출력
 st.subheader("💡 소비 조언")
 if spending_data:
     tips = analyze_spending(spending_data, monthly_budget)
