@@ -1,6 +1,12 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
+
+# ✅ NanumGothic 폰트 직접 경로로 지정
+font_path = "NanumGothic-Bold.ttf"
+fontprop = fm.FontProperties(fname=font_path)
+plt.rcParams['axes.unicode_minus'] = False  # 음수 깨짐 방지
 
 # 소비 조언 생성 함수
 def analyze_spending(spending_data, monthly_budget):
@@ -46,7 +52,13 @@ st.subheader("📈 지출 비율 시각화")
 if spending_data and sum([item['amount'] for item in spending_data]) > 0:
     df = pd.DataFrame(spending_data)
     fig, ax = plt.subplots()
-    ax.pie(df['amount'], labels=df['category'], autopct='%1.1f%%', startangle=90)
+    wedges, texts, autotexts = ax.pie(
+        df['amount'],
+        labels=df['category'],
+        autopct='%1.1f%%',
+        startangle=90,
+        textprops={'fontproperties': fontprop}  # ✅ 한글 폰트 적용
+    )
     ax.axis('equal')  # 원형 유지
     st.pyplot(fig)
 else:
