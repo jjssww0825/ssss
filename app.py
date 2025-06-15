@@ -1,11 +1,9 @@
-# 프로젝트 구조: 자산 관리 및 소비 조언 시스템
+# 프로젝트 구조: 자산 관리 및 소비 조언 시스템 (Streamlit 버전)
 
 # 파일: app.py
-# 설명: 사용자 소비 데이터를 기반으로 조언을 제공하는 Flask 백엔드 서버입니다.
+# 설명: 사용자 소비 데이터를 기반으로 조언을 제공하는 Streamlit 앱입니다.
 
-from flask import Flask, request, jsonify
-
-app = Flask(__name__)
+import streamlit as st
 
 # 예시 사용자 데이터베이스 (실제 서비스에서는 DB 연결 필요)
 users = {
@@ -26,9 +24,9 @@ users = {
 def analyze_spending(user_data):
     total_spent = sum(item['amount'] for item in user_data['spending'])
     total_assets = user_data['assets']
-    
+
     tips = []
-    
+
     if total_spent > 0.3 * total_assets:
         tips.append("소비가 자산의 30% 이상입니다. 지출을 줄이는 것이 좋습니다.")
 
@@ -43,15 +41,19 @@ def analyze_spending(user_data):
 
     return tips
 
-@app.route("/advice/<username>", methods=["GET"])
-def get_advice(username):
-    user = users.get(username)
-    if not user:
-        return jsonify({"error": "사용자를 찾을 수 없습니다."}), 404
-    
-    tips = analyze_spending(user)
-    return jsonify({"advice": tips})
+# Streamlit UI
+st.title("소비 분석 기반 자산 조언 시스템")
 
-# 로컬 실행 시만 사용 (배포 환경에서는 제외)
-# if __name__ == "__main__":
-#     app.run(debug=True)
+selected_user = st.selectbox("사용자를 선택하세요", list(users.keys()))
+
+if selected_user:
+    user_data = users[selected_user]
+
+    st.subheader("🧾 소비 내역")
+    for item in user_data["spending"]:
+        st.write(f"- {item['category']}: {item['amount']:,}원")
+
+    st.subheader("💡 소비 조언")
+    tips = analyze_spending(user_data)
+    for tip in tips:
+        st.success(tip)
