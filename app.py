@@ -1,8 +1,3 @@
-# 프로젝트 구조: 자산 관리 및 소비 조언 시스템 (Streamlit 버전)
-
-# 파일: app.py
-# 설명: 사용자 소비 데이터를 기반으로 조언을 제공하는 Streamlit 앱입니다.
-
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -17,8 +12,7 @@ plt.rcParams['axes.unicode_minus'] = False  # 음수 깨짐 방지
 # 데이터 저장 디렉토리
 DATA_FILE = "monthly_spending.csv"
 
-# 소비 조언 생성 함수
-
+# ✅ 소비 조언 생성 함수
 def analyze_spending(spending_data, monthly_budget):
     total_spent = sum(item['amount'] for item in spending_data)
     tips = []
@@ -59,7 +53,7 @@ def analyze_spending(spending_data, monthly_budget):
 
     return tips
 
-# Streamlit UI
+# ✅ Streamlit UI
 st.title("월간 소비 분석 자산 조언 시스템")
 
 st.sidebar.header("🔧 설정")
@@ -97,28 +91,32 @@ if st.button("저장 및 분석"):
     plt.legend(prop=fontprop)
     st.pyplot(fig2)
 
-# 시각화: 원형 그래프
+# ✅ 시각화: 원형 그래프
 st.subheader("📈 지출 비율 시각화")
 if spending_data and sum([item['amount'] for item in spending_data]) > 0:
     df = pd.DataFrame(spending_data)
-    df = df[df['amount'] > 0]  # ✅ 0원 항목 제거
+    df = df[df['amount'] > 0]
     fig, ax = plt.subplots()
     wedges, texts, autotexts = ax.pie(
         df['amount'],
         labels=df['category'],
         autopct='%1.1f%%',
         startangle=90,
-        textprops={'fontproperties': fontprop, 'fontsize': 12}  # ✅ 폰트 크기 지정
+        textprops={'fontproperties': fontprop, 'fontsize': 12}
     )
     for text in texts + autotexts:
         text.set_fontproperties(fontprop)
-    ax.axis('equal')  # 원형 유지
+    ax.axis('equal')
     st.pyplot(fig)
 else:
     st.info("지출 금액을 입력하면 그래프가 표시됩니다.")
 
-# 소비 조언 출력
+# ✅ 총합 표시
 st.subheader("💡 소비 조언")
+total_spent = sum([item['amount'] for item in spending_data])
+st.markdown(f"### 🧾 총 소비 합계: **{total_spent:,}원**")
+
+# ✅ 소비 조언 출력
 if spending_data:
     tips = analyze_spending(spending_data, monthly_budget)
     for tip in tips:
