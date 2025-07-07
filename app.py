@@ -1,71 +1,64 @@
-import streamlit as st
-import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
-import os
+import pandas as pd
+import streamlit as st
 
-# ✅ 한글 폰트 설정 (NanumGothic)
-font_path = "NanumGothic-Bold.ttf"
-fontprop = fm.FontProperties(fname=font_path, size=12)
-plt.rcParams['font.family'] = fontprop.get_name()
-plt.rcParams['axes.unicode_minus'] = False
+# ✅ 폰트 설정 (TTF 경로)
+font_path = "/mnt/data/NanumGothicBold.ttf"
+font_prop = fm.FontProperties(fname=font_path)
 
-DATA_FILE = "monthly_spending.csv"
-categories = ["교통", "쇼핑", "식비", "여가", "카페"]
+# ✅ 예제 데이터
+monthly_data = {
+    '카테고리': ['교통', '쇼핑', '식비', '여가', '카페'],
+    '1월': [253000, 252000, 12000, 63000, 23000],
+    '2월': [41000, 16000, 180000, 41000, 40000]
+}
 
-# ✅ UI
-st.title("💳 월별 지출 분석 + 연간 평균")
-st.sidebar.header("🔧 설정")
-month = st.sidebar.selectbox("📅 월 선택", [f"{i}월" for i in range(1, 13)])
-budget = st.sidebar.slider("💰 월 예산 (원)", 100000, 1000000, 300000, step=50000)
+average_data = {
+    '카테고리': ['교통', '쇼핑', '식비', '여가', '카페'],
+    '연간 평균': [97406, 89074, 64074, 34074, 20407]
+}
 
-# ✅ 지출 입력
-st.subheader(f"📊 {month} 소비 내역 입력")
-spending = {}
-for cat in categories:
-    spending[cat] = st.number_input(f"{cat} 지출 (원)", min_value=0, step=1000, key=cat)
+df_monthly = pd.DataFrame(monthly_data)
+df_avg = pd.DataFrame(average_data)
 
-if st.button("저장 및 분석"):
-    df_new = pd.DataFrame([{"month": month, "category": k, "amount": v} for k, v in spending.items()])
-    if os.path.exists(DATA_FILE):
-        df_old = pd.read_csv(DATA_FILE)
-        df_all = pd.concat([df_old, df_new], ignore_index=True)
-    else:
-        df_all = df_new
-    df_all.to_csv(DATA_FILE, index=False)
-    st.success(f"{month} 데이터가 저장되었습니다!")
+# ✅ 📊 월별 지출 그래프
+st.markdown("### 📈 월별 지출 비교")
+fig1, ax1 = plt.subplots()
+x = df_monthly['카테고리']
+bar_width = 0.35
+index = range(len(x))
 
-# ✅ 초기화
-if st.button("초기화"):
-    if os.path.exists(DATA_FILE):
-        os.remove(DATA_FILE)
-        st.success("모든 지출 데이터가 초기화되었습니다.")
+ax1.bar([i - bar_width/2 for i in index], df_monthly['1월'], bar_width, label='1월')
+ax1.bar([i + bar_width/2 for i in index], df_monthly['2월'], bar_width, label='2월')
 
-# ✅ 시각화
-if os.path.exists(DATA_FILE):
-    df = pd.read_csv(DATA_FILE)
+ax1.set_xlabel('카테고리', fontproperties=font_prop)
+ax1.set_ylabel('지출 금액', fontproperties=font_prop)
+ax1.set_title('월별 지출 비교', fontproperties=font_prop)
+ax1.set_xticks(index)
+ax1.set_xticklabels(x, fontproperties=font_prop)
+ax1.tick_params(axis='y')
+ax1.legend(prop=font_prop)
 
-    # 최근 월 비교 그래프
-    st.subheader("📈 월별 지출 비교")
-    pivot = df.pivot_table(index="category", columns="month", values="amount", aggfunc="sum", fill_value=0)
-    pivot = pivot.reindex(categories)
+# ✅ 한글 폰트 적용
+for label in ax1.get_yticklabels():
+    label.set_fontproperties(font_prop)
 
-    fig1, ax1 = plt.subplots(figsize=(10, 5))
-    pivot.plot(kind="bar", ax=ax1)
-    ax1.set_ylabel("지출 금액", fontproperties=fontprop)
-    ax1.set_xlabel("카테고리", fontproperties=fontprop)
-    ax1.tick_params(axis='x', labelrotation=0)
-    ax1.legend(title="월", prop=fontprop)
-    st.pyplot(fig1)
+st.pyplot(fig1)
 
-    # 연간 평균 그래프
-    st.subheader("📉 연간 평균 지출")
-    avg_data = df.groupby("category")["amount"].mean().reindex(categories)
+# ✅ 📉 연간 평균 지출 그래프
+st.markdown("### 📉 연간 평균 지출")
+fig2, ax2 = plt.subplots()
+x = df_avg['카테고리']
+y = df_avg['연간 평균']
 
-    fig2, ax2 = plt.subplots(figsize=(8, 5))
-    bars = ax2.bar(avg_data.index, avg_data.values, color='salmon')
-    ax2.set_ylabel("지출 금액", fontproperties=fontprop)
-    ax2.set_xlabel("카테고리", fontproperties=fontprop)
-    ax2.set_title("카테고리별 연간 평균 지출", fontproperties=fontprop)
-    ax2.tick_params(axis='x', labelrotation=0)
-    st.pyplot(fig2)
+bars = ax2.bar(x, y, color='salmon')
+ax2.set_xlabel("카테고리", fontproperties=font_prop)
+ax2.set_ylabel("지출 금액", fontproperties=font_prop)
+ax2.set_title("카테고리별 연간 평균 지출", fontproperties=font_prop)
+
+ax2.set_xticklabels(x, fontproperties=font_prop)
+for label in ax2.get_yticklabels():
+    label.set_fontproperties(font_prop)
+
+st.pyplot(fig2)
