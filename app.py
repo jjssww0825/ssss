@@ -48,11 +48,11 @@ if st.button("저장 및 분석"):
     )
     fig1, ax1 = plt.subplots(figsize=(10, 4))
     pivot.plot(kind="bar", ax=ax1)
+    # ───── 범례에도 한글 폰트 적용 ─────
+    ax1.legend(prop=fontprop)
     ax1.set_ylabel("지출 금액", fontproperties=fontprop)
     ax1.set_title("📊 월별 지출 비교", fontproperties=fontprop)
     plt.xticks(rotation=0, fontproperties=fontprop)
-    # 범례에도 한글 폰트 적용
-    ax1.legend(prop=fontprop)
     # y축 최대값에 50% 여유 추가
     y1_max = pivot.values.max() * 1.5
     ax1.set_ylim(0, y1_max)
