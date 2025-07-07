@@ -11,6 +11,7 @@ plt.rcParams['axes.unicode_minus'] = False
 
 DATA_FILE = "monthly_spending.csv"
 
+# ✅ 소비 조언 함수
 def analyze_spending(spending_data, monthly_budget):
     total_spent = sum(item['amount'] for item in spending_data)
     tips = []
@@ -56,20 +57,18 @@ st.write(f"### 💰 {month} 예산: {monthly_budget:,}원")
 # ✅ '기타' 제거된 카테고리
 categories = ["식비", "카페", "쇼핑", "교통", "여가"]
 
-# ✅ 세션 상태 초기화
-for category in categories:
-    if f"{category}_amount" not in st.session_state:
-        st.session_state[f"{category}_amount"] = 0
-
-# ✅ 소비 내역 입력 + 초기화 버튼
+# ✅ 소비 내역 입력
 st.subheader("📊 소비 내역 입력")
 spending_data = []
+
 for category in categories:
+    default_value = st.session_state.get(f"{category}_amount", 0)
     amount = st.number_input(
         f"{category} 지출 (원)",
         min_value=0,
         step=1000,
-        key=f"{category}_amount"
+        key=f"{category}_amount",
+        value=default_value
     )
     spending_data.append({"month": month, "category": category, "amount": amount})
 
