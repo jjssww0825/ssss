@@ -51,8 +51,8 @@ if st.button("저장 및 분석"):
     ax1.set_ylabel("지출 금액", fontproperties=fontprop)
     ax1.set_title("📊 월별 지출 비교", fontproperties=fontprop)
     plt.xticks(rotation=0, fontproperties=fontprop)
-    # y축 최대값에 20% 여유 추가
-    y1_max = pivot.values.max() * 1.2
+    # y축 최대값에 50% 여유 추가
+    y1_max = pivot.values.max() * 1.5
     ax1.set_ylim(0, y1_max)
     st.pyplot(fig1)
 
@@ -64,8 +64,8 @@ if st.button("저장 및 분석"):
     ax2.set_ylabel("지출 금액", fontproperties=fontprop)
     ax2.set_title("📊 카테고리별 연간 평균 지출", fontproperties=fontprop)
     plt.xticks(rotation=0, fontproperties=fontprop)
-    # y축 최대값에 20% 여유 추가
-    y2_max = avg_df.max() * 1.2
+    # y축 최대값에 50% 여유 추가
+    y2_max = avg_df.max() * 1.5
     ax2.set_ylim(0, y2_max)
     st.pyplot(fig2)
 
