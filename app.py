@@ -11,14 +11,14 @@ if os.path.exists(FONT_PATH):
     plt.rcParams['font.family'] = fontprop.get_name()
     plt.rcParams['axes.unicode_minus'] = False
 else:
-    st.warning("⚠️ NanumGothic-Bold.ttf 파일이 없습니다. 앱과 같은 폴더에 추가하세요.")
+    st.warning("⚠️ NanumGothic-Bold.ttf 파일이 없습니다. 앱과 같은 폴더에 넣어주세요.")
     fontprop = None
 
-# ✅ 파일 설정
+# ✅ 파일/카테고리 정의
 DATA_FILE = "monthly_spending.csv"
 CATEGORIES = ["식비", "카페", "쇼핑", "교통", "여가"]
 
-# ✅ 소비 분석
+# ✅ 소비 조언 생성 함수
 def analyze_spending(spending_data, budget):
     total = sum([x["amount"] for x in spending_data])
     tips = []
@@ -50,7 +50,7 @@ def analyze_spending(spending_data, budget):
 
     return tips
 
-# ✅ UI 구성
+# ✅ 앱 UI 구성
 st.set_page_config(page_title="자산 소비 분석 시스템", layout="wide")
 st.title("📊 월간 소비 분석 자산 조언 시스템")
 
@@ -58,13 +58,13 @@ st.sidebar.header("설정")
 month = st.sidebar.selectbox("📆 분석할 월", [f"{i}월" for i in range(1, 13)])
 budget = st.sidebar.slider("💰 월 예산 (원)", 100000, 1000000, 300000, step=50000)
 
-# ✅ 데이터 로드
+# ✅ 데이터 불러오기
 if os.path.exists(DATA_FILE):
     df_all = pd.read_csv(DATA_FILE)
 else:
     df_all = pd.DataFrame(columns=["month", "category", "amount"])
 
-# ✅ 기존 데이터 불러오기
+# ✅ 기존 입력 값 불러오기
 previous = df_all[df_all["month"] == month]
 st.subheader("✍️ 소비 내역 입력")
 spending_data = []
@@ -73,8 +73,9 @@ for category in CATEGORIES:
     amount = st.number_input(f"{category} 지출 (원)", min_value=0, step=1000, value=default, key=category)
     spending_data.append({"month": month, "category": category, "amount": amount})
 
-# ✅ 버튼
+# ✅ 버튼: 저장 & 초기화
 col1, col2 = st.columns(2)
+
 if col1.button("💾 저장 및 분석"):
     df_new = pd.DataFrame(spending_data)
     df_all = df_all[df_all["month"] != month]
@@ -94,14 +95,13 @@ if col1.button("💾 저장 및 분석"):
     for tip in analyze_spending(spending_data, budget):
         st.info(tip)
 
-# ✅ 초기화 버튼
 if col2.button("🗑️ 전체 초기화"):
     if os.path.exists(DATA_FILE):
         os.remove(DATA_FILE)
     st.warning("📂 모든 저장 데이터를 삭제했습니다.")
     st.experimental_rerun()
 
-# ✅ 비교할 월 수 선택
+# ✅ 최근 비교할 월 수 선택
 compare_n = st.sidebar.selectbox("📅 비교할 최근 월 수", [1, 3, 6, 9, 12])
 
 # ✅ 월별 비교 그래프
@@ -121,3 +121,23 @@ if not df_all.empty:
     plt.legend(prop=fontprop)
     plt.tight_layout()
     st.pyplot(fig2)
+
+    # ✅ 연간 평균 지출 그래프
+    st.subheader("📉 연간 평균 지출 (카테고리별)")
+    full_months = [f"{i}월" for i in range(1, 13)]
+    filtered_df = df_all[df_all["month"].isin(full_months)]
+
+    if not filtered_df.empty:
+        avg_df = filtered_df.groupby("category")["amount"].mean().reset_index()
+        fig3, ax3 = plt.subplots(figsize=(8, 4))
+        ax3.bar(avg_df["category"], avg_df["amount"], color='skyblue')
+
+        ax3.set_xlabel("지출 항목", fontproperties=fontprop)
+        ax3.set_ylabel("평균 지출 금액", fontproperties=fontprop)
+        ax3.set_title("1~12월 연간 평균 지출", fontproperties=fontprop)
+        plt.xticks(fontproperties=fontprop)
+        plt.yticks(fontproperties=fontprop)
+        plt.tight_layout()
+        st.pyplot(fig3)
+    else:
+        st.info("💡 1~12월 월별 지출 데이터가 충분하지 않아 평균을 계산할 수 없습니다.")
