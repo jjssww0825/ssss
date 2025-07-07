@@ -11,7 +11,7 @@ plt.rcParams['axes.unicode_minus'] = False
 
 DATA_FILE = "monthly_spending.csv"
 
-# ✅ 소비 조언 함수
+# ✅ 소비 조언 생성 함수
 def analyze_spending(spending_data, monthly_budget):
     total_spent = sum(item['amount'] for item in spending_data)
     tips = []
@@ -54,7 +54,7 @@ monthly_budget = st.sidebar.slider("월 예산 설정 (원)", 100000, 1000000, 3
 
 st.write(f"### 💰 {month} 예산: {monthly_budget:,}원")
 
-# ✅ 지출 카테고리 (기타 제외)
+# ✅ 카테고리 (기타 제거)
 categories = ["식비", "카페", "쇼핑", "교통", "여가"]
 
 # ✅ 소비 내역 입력
@@ -69,13 +69,15 @@ for category in categories:
     )
     spending_data.append({"month": month, "category": category, "amount": amount})
 
-# ✅ 초기화 버튼 (st.session_state 삭제 후 rerun)
+# ✅ 초기화 버튼: 입력값 + csv 삭제
 if st.button("초기화"):
     for key in list(st.session_state.keys()):
         del st.session_state[key]
-    st.rerun()  # ✅ 최신 버전 사용
+    if os.path.exists(DATA_FILE):
+        os.remove(DATA_FILE)
+    st.rerun()
 
-# ✅ 저장 및 분석
+# ✅ 저장 및 분석 버튼
 if st.button("저장 및 분석"):
     df_new = pd.DataFrame(spending_data)
     if os.path.exists(DATA_FILE):
@@ -114,7 +116,7 @@ if spending_data and sum(item['amount'] for item in spending_data) > 0:
 else:
     st.info("지출 금액을 입력하면 그래프가 표시됩니다.")
 
-# ✅ 총합 및 소비 조언
+# ✅ 총합 및 조언
 st.subheader("💡 소비 조언")
 total_spent = sum(item['amount'] for item in spending_data)
 st.markdown(f"### 🧾 총 소비 합계: **{total_spent:,}원**")
