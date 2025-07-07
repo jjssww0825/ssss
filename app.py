@@ -11,7 +11,7 @@ plt.rcParams['axes.unicode_minus'] = False
 
 DATA_FILE = "monthly_spending.csv"
 
-# ✅ 소비 조언 생성 함수
+# ✅ 소비 조언 함수
 def analyze_spending(spending_data, monthly_budget):
     total_spent = sum(item['amount'] for item in spending_data)
     tips = []
@@ -45,7 +45,7 @@ def analyze_spending(spending_data, monthly_budget):
     tips.append(f"💡 이번 달 최소 저축 권장액은 {int(monthly_budget * 0.2):,}원입니다.")
     return tips
 
-# ✅ 앱 제목 & 설정
+# ✅ UI 구성 시작
 st.title("월간 소비 분석 자산 조언 시스템")
 
 st.sidebar.header("🔧 설정")
@@ -54,7 +54,7 @@ monthly_budget = st.sidebar.slider("월 예산 설정 (원)", 100000, 1000000, 3
 
 st.write(f"### 💰 {month} 예산: {monthly_budget:,}원")
 
-# ✅ 카테고리 (기타 제거)
+# ✅ 지출 카테고리 (기타 제외)
 categories = ["식비", "카페", "쇼핑", "교통", "여가"]
 
 # ✅ 소비 내역 입력
@@ -69,13 +69,13 @@ for category in categories:
     )
     spending_data.append({"month": month, "category": category, "amount": amount})
 
-# ✅ 초기화 버튼 (세션 전체 삭제 → 앱 재실행)
+# ✅ 초기화 버튼 (st.session_state 삭제 후 rerun)
 if st.button("초기화"):
     for key in list(st.session_state.keys()):
         del st.session_state[key]
-    st.experimental_rerun()
+    st.rerun()  # ✅ 최신 버전 사용
 
-# ✅ 저장 및 분석 버튼
+# ✅ 저장 및 분석
 if st.button("저장 및 분석"):
     df_new = pd.DataFrame(spending_data)
     if os.path.exists(DATA_FILE):
@@ -94,7 +94,7 @@ if st.button("저장 및 분석"):
     plt.legend(prop=fontprop)
     st.pyplot(fig2)
 
-# ✅ 지출 비율 원형 차트
+# ✅ 원형 그래프
 st.subheader("📈 지출 비율 시각화")
 if spending_data and sum(item['amount'] for item in spending_data) > 0:
     df = pd.DataFrame(spending_data)
