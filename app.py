@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 import os
 
-# 폰트 설정
+# ✅ 한글 폰트 설정
 font_path = "NanumGothic-Bold.ttf"
 fontprop = fm.FontProperties(fname=font_path)
 plt.rcParams['axes.unicode_minus'] = False
@@ -44,7 +44,7 @@ def analyze_spending(spending_data, monthly_budget):
     tips.append(f"💡 이번 달 최소 저축 권장액은 {int(monthly_budget * 0.2):,}원입니다.")
     return tips
 
-# Streamlit UI
+# ✅ UI 시작
 st.title("월간 소비 분석 자산 조언 시스템")
 
 st.sidebar.header("🔧 설정")
@@ -53,16 +53,33 @@ monthly_budget = st.sidebar.slider("월 예산 설정 (원)", 100000, 1000000, 3
 
 st.write(f"### 💰 {month} 예산: {monthly_budget:,}원")
 
-# ✅ '기타' 항목 제거된 카테고리
+# ✅ '기타' 제거된 카테고리
 categories = ["식비", "카페", "쇼핑", "교통", "여가"]
-spending_data = []
 
-st.subheader("📊 소비 내역 입력")
+# ✅ 세션 상태 초기화
 for category in categories:
-    amount = st.number_input(f"{category} 지출 (원)", min_value=0, step=1000, key=category)
+    if f"{category}_amount" not in st.session_state:
+        st.session_state[f"{category}_amount"] = 0
+
+# ✅ 소비 내역 입력 + 초기화 버튼
+st.subheader("📊 소비 내역 입력")
+spending_data = []
+for category in categories:
+    amount = st.number_input(
+        f"{category} 지출 (원)",
+        min_value=0,
+        step=1000,
+        key=f"{category}_amount"
+    )
     spending_data.append({"month": month, "category": category, "amount": amount})
 
-# 저장 및 분석
+# ✅ 초기화 버튼
+if st.button("초기화"):
+    for category in categories:
+        st.session_state[f"{category}_amount"] = 0
+    st.experimental_rerun()
+
+# ✅ 저장 및 분석 버튼
 if st.button("저장 및 분석"):
     df_new = pd.DataFrame(spending_data)
     if os.path.exists(DATA_FILE):
@@ -81,7 +98,7 @@ if st.button("저장 및 분석"):
     plt.legend(prop=fontprop)
     st.pyplot(fig2)
 
-# 시각화
+# ✅ 지출 비율 원형 차트
 st.subheader("📈 지출 비율 시각화")
 if spending_data and sum(item['amount'] for item in spending_data) > 0:
     df = pd.DataFrame(spending_data)
@@ -101,7 +118,7 @@ if spending_data and sum(item['amount'] for item in spending_data) > 0:
 else:
     st.info("지출 금액을 입력하면 그래프가 표시됩니다.")
 
-# ✅ 총합 표시 및 소비 조언
+# ✅ 총합 및 조언
 st.subheader("💡 소비 조언")
 total_spent = sum(item['amount'] for item in spending_data)
 st.markdown(f"### 🧾 총 소비 합계: **{total_spent:,}원**")
