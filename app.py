@@ -4,15 +4,13 @@ import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 import os
 
-# ✅ NanumGothic 폰트 직접 경로로 지정
+# 폰트 설정
 font_path = "NanumGothic-Bold.ttf"
 fontprop = fm.FontProperties(fname=font_path)
-plt.rcParams['axes.unicode_minus'] = False  # 음수 깨짐 방지
+plt.rcParams['axes.unicode_minus'] = False
 
-# 데이터 저장 디렉토리
 DATA_FILE = "monthly_spending.csv"
 
-# ✅ 소비 조언 생성 함수
 def analyze_spending(spending_data, monthly_budget):
     total_spent = sum(item['amount'] for item in spending_data)
     tips = []
@@ -40,38 +38,31 @@ def analyze_spending(spending_data, monthly_budget):
             tips.append("여가 활동 지출이 높습니다. 무료 또는 저비용 활동도 고려해보세요.")
         elif category == "교통" and amount > 100000:
             tips.append("교통비가 높습니다. 대중교통 정기권이나 자전거 이용도 고려해보세요.")
-        elif category == "기타" and amount > 150000:
-            tips.append("기타 지출이 많습니다. 필요하지 않은 지출은 줄이는 것이 좋습니다.")
 
-    # 절약 점수 계산
     saving_score = max(0, min(100, int((1 - total_spent / monthly_budget) * 100)))
     tips.append(f"📊 절약 점수: {saving_score}/100")
-
-    # 목표 저축액 제안
-    recommended_saving = int(monthly_budget * 0.2)
-    tips.append(f"💡 이번 달 최소 저축 권장액은 {recommended_saving:,}원입니다.")
-
+    tips.append(f"💡 이번 달 최소 저축 권장액은 {int(monthly_budget * 0.2):,}원입니다.")
     return tips
 
-# ✅ Streamlit UI
+# Streamlit UI
 st.title("월간 소비 분석 자산 조언 시스템")
 
 st.sidebar.header("🔧 설정")
-month = st.sidebar.selectbox("분석할 월을 선택하세요", ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"])
-monthly_budget = st.sidebar.slider("월 예산 설정 (원)", min_value=100000, max_value=1000000, step=50000, value=300000)
+month = st.sidebar.selectbox("분석할 월을 선택하세요", [f"{i}월" for i in range(1, 13)])
+monthly_budget = st.sidebar.slider("월 예산 설정 (원)", 100000, 1000000, 300000, 50000)
 
 st.write(f"### 💰 {month} 예산: {monthly_budget:,}원")
 
-# 사용자 입력을 받아 소비 내역 구성
-st.subheader("📊 소비 내역 입력")
-categories = ["식비", "카페", "쇼핑", "교통", "여가", "기타"]
+# ✅ '기타' 항목 제거된 카테고리
+categories = ["식비", "카페", "쇼핑", "교통", "여가"]
 spending_data = []
 
+st.subheader("📊 소비 내역 입력")
 for category in categories:
     amount = st.number_input(f"{category} 지출 (원)", min_value=0, step=1000, key=category)
     spending_data.append({"month": month, "category": category, "amount": amount})
 
-# 데이터 저장 및 비교
+# 저장 및 분석
 if st.button("저장 및 분석"):
     df_new = pd.DataFrame(spending_data)
     if os.path.exists(DATA_FILE):
@@ -82,7 +73,6 @@ if st.button("저장 및 분석"):
     df_all.to_csv(DATA_FILE, index=False)
     st.success(f"{month} 데이터가 저장되었습니다!")
 
-    # 월별 비교 시각화
     st.subheader("📊 월별 지출 비교")
     pivot = df_all.pivot_table(index="category", columns="month", values="amount", aggfunc="sum", fill_value=0)
     fig2, ax2 = plt.subplots(figsize=(10, 4))
@@ -91,9 +81,9 @@ if st.button("저장 및 분석"):
     plt.legend(prop=fontprop)
     st.pyplot(fig2)
 
-# ✅ 시각화: 원형 그래프
+# 시각화
 st.subheader("📈 지출 비율 시각화")
-if spending_data and sum([item['amount'] for item in spending_data]) > 0:
+if spending_data and sum(item['amount'] for item in spending_data) > 0:
     df = pd.DataFrame(spending_data)
     df = df[df['amount'] > 0]
     fig, ax = plt.subplots()
@@ -111,12 +101,11 @@ if spending_data and sum([item['amount'] for item in spending_data]) > 0:
 else:
     st.info("지출 금액을 입력하면 그래프가 표시됩니다.")
 
-# ✅ 총합 표시
+# ✅ 총합 표시 및 소비 조언
 st.subheader("💡 소비 조언")
-total_spent = sum([item['amount'] for item in spending_data])
+total_spent = sum(item['amount'] for item in spending_data)
 st.markdown(f"### 🧾 총 소비 합계: **{total_spent:,}원**")
 
-# ✅ 소비 조언 출력
 if spending_data:
     tips = analyze_spending(spending_data, monthly_budget)
     for tip in tips:
