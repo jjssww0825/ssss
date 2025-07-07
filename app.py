@@ -11,7 +11,6 @@ plt.rcParams['axes.unicode_minus'] = False
 
 DATA_FILE = "monthly_spending.csv"
 
-# ✅ 소비 조언 생성 함수
 def analyze_spending(spending_data, monthly_budget):
     total_spent = sum(item['amount'] for item in spending_data)
     tips = []
@@ -45,7 +44,7 @@ def analyze_spending(spending_data, monthly_budget):
     tips.append(f"💡 이번 달 최소 저축 권장액은 {int(monthly_budget * 0.2):,}원입니다.")
     return tips
 
-# ✅ UI 구성 시작
+# ✅ UI 구성
 st.title("월간 소비 분석 자산 조언 시스템")
 
 st.sidebar.header("🔧 설정")
@@ -54,22 +53,16 @@ monthly_budget = st.sidebar.slider("월 예산 설정 (원)", 100000, 1000000, 3
 
 st.write(f"### 💰 {month} 예산: {monthly_budget:,}원")
 
-# ✅ 카테고리 (기타 제거)
 categories = ["식비", "카페", "쇼핑", "교통", "여가"]
 
-# ✅ 소비 내역 입력
+# ✅ 소비 입력
 st.subheader("📊 소비 내역 입력")
 spending_data = []
 for category in categories:
-    amount = st.number_input(
-        f"{category} 지출 (원)",
-        min_value=0,
-        step=1000,
-        key=f"{category}_amount"
-    )
+    amount = st.number_input(f"{category} 지출 (원)", min_value=0, step=1000, key=f"{category}_amount")
     spending_data.append({"month": month, "category": category, "amount": amount})
 
-# ✅ 초기화 버튼: 입력값 + csv 삭제
+# ✅ 초기화 버튼
 if st.button("초기화"):
     for key in list(st.session_state.keys()):
         del st.session_state[key]
@@ -77,7 +70,7 @@ if st.button("초기화"):
         os.remove(DATA_FILE)
     st.rerun()
 
-# ✅ 저장 및 분석 버튼
+# ✅ 저장 및 분석
 if st.button("저장 및 분석"):
     df_new = pd.DataFrame(spending_data)
     if os.path.exists(DATA_FILE):
@@ -90,10 +83,21 @@ if st.button("저장 및 분석"):
 
     st.subheader("📊 월별 지출 비교")
     pivot = df_all.pivot_table(index="category", columns="month", values="amount", aggfunc="sum", fill_value=0)
+
+    # ✅ 막대그래프 수동 렌더링 (폰트 깨짐 방지)
     fig2, ax2 = plt.subplots(figsize=(10, 4))
-    pivot.plot(kind="bar", ax=ax2, fontsize=10)
-    plt.xticks(rotation=45, fontproperties=fontprop)
-    plt.legend(prop=fontprop)
+    months = pivot.columns
+    x = range(len(pivot.index))
+    bar_width = 0.35
+
+    for i, month_label in enumerate(months):
+        offset = (i - len(months)/2) * bar_width * 1.1
+        ax2.bar([xi + offset for xi in x], pivot[month_label], width=bar_width, label=month_label)
+
+    ax2.set_xticks(x)
+    ax2.set_xticklabels(pivot.index, fontproperties=fontprop)
+    ax2.set_ylabel("지출 금액", fontproperties=fontprop)
+    ax2.legend(prop=fontprop)
     st.pyplot(fig2)
 
 # ✅ 원형 그래프
@@ -116,7 +120,7 @@ if spending_data and sum(item['amount'] for item in spending_data) > 0:
 else:
     st.info("지출 금액을 입력하면 그래프가 표시됩니다.")
 
-# ✅ 총합 및 조언
+# ✅ 총합 + 소비 조언
 st.subheader("💡 소비 조언")
 total_spent = sum(item['amount'] for item in spending_data)
 st.markdown(f"### 🧾 총 소비 합계: **{total_spent:,}원**")
