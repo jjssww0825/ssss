@@ -52,6 +52,9 @@ st.sidebar.header("🔧 설정")
 month = st.sidebar.selectbox("분석할 월을 선택하세요", [f"{i}월" for i in range(1, 13)])
 monthly_budget = st.sidebar.slider("월 예산 설정 (원)", 100000, 1000000, 300000, 50000)
 
+# ✅ 선택 가능한 월 수 옵션으로 변경
+compare_months = st.sidebar.selectbox("비교할 최근 월 수", [1, 3, 6, 9, 12], index=2)
+
 st.write(f"### 💰 {month} 예산: {monthly_budget:,}원")
 
 categories = ["식비", "카페", "쇼핑", "교통", "여가"]
@@ -106,8 +109,11 @@ if st.button("저장 및 분석"):
     # ✅ 막대그래프
     st.subheader("📊 월별 지출 비교")
     pivot = df_all.pivot_table(index="category", columns="month", values="amount", aggfunc="sum", fill_value=0)
-    fig2, ax2 = plt.subplots(figsize=(10, 4))
+    all_months = sorted(pivot.columns, key=lambda x: int(x.replace("월", "")))
+    selected_months = all_months[-compare_months:]
+    pivot = pivot[selected_months]
 
+    fig2, ax2 = plt.subplots(figsize=(10, 4))
     categories_list = list(pivot.index)
     months = list(pivot.columns)
     x = np.arange(len(categories_list))
@@ -119,8 +125,6 @@ if st.button("저장 및 분석"):
     ax2.set_xticks(x + bar_width * (len(months) - 1) / 2)
     ax2.set_xticklabels(categories_list, fontproperties=fontprop)
     ax2.set_ylabel("지출 금액", fontproperties=fontprop)
-
-    # ✅ 범례 위치 오른쪽 바깥으로 이동
     ax2.legend(prop=fontprop, loc='upper left', bbox_to_anchor=(1.02, 1))
 
     st.pyplot(fig2)
