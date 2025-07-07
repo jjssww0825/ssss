@@ -56,11 +56,29 @@ st.write(f"### 💰 {month} 예산: {monthly_budget:,}원")
 
 categories = ["식비", "카페", "쇼핑", "교통", "여가"]
 
-# ✅ 소비 입력
+# ✅ 선택한 월의 소비 데이터 불러오기
+loaded_data = {}
+if os.path.exists(DATA_FILE):
+    df_all = pd.read_csv(DATA_FILE)
+    df_month = df_all[df_all["month"] == month]
+    for category in categories:
+        match = df_month[df_month["category"] == category]
+        loaded_data[category] = int(match["amount"].values[-1]) if not match.empty else 0
+else:
+    for category in categories:
+        loaded_data[category] = 0
+
+# ✅ 소비 내역 입력
 st.subheader("📊 소비 내역 입력")
 spending_data = []
 for category in categories:
-    amount = st.number_input(f"{category} 지출 (원)", min_value=0, step=1000, key=f"{category}_amount")
+    amount = st.number_input(
+        f"{category} 지출 (원)",
+        min_value=0,
+        step=1000,
+        key=f"{category}_amount",
+        value=loaded_data[category]
+    )
     spending_data.append({"month": month, "category": category, "amount": amount})
 
 # ✅ 초기화 버튼
@@ -74,15 +92,18 @@ if st.button("초기화"):
 # ✅ 저장 및 분석
 if st.button("저장 및 분석"):
     df_new = pd.DataFrame(spending_data)
+
     if os.path.exists(DATA_FILE):
-        df_old = pd.read_csv(DATA_FILE)
-        df_all = pd.concat([df_old, df_new], ignore_index=True)
+        df_all = pd.read_csv(DATA_FILE)
+        df_all = df_all[~((df_all["month"] == month) & (df_all["category"].isin(categories)))]
+        df_all = pd.concat([df_all, df_new], ignore_index=True)
     else:
         df_all = df_new
+
     df_all.to_csv(DATA_FILE, index=False)
     st.success(f"{month} 데이터가 저장되었습니다!")
 
-    # ✅ 막대그래프 (겹치지 않게 조정)
+    # ✅ 막대그래프
     st.subheader("📊 월별 지출 비교")
     pivot = df_all.pivot_table(index="category", columns="month", values="amount", aggfunc="sum", fill_value=0)
     fig2, ax2 = plt.subplots(figsize=(10, 4))
