@@ -2,73 +2,54 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
-import numpy as np
+import os
 
-# ✅ 한글 폰트 설정 (Windows 기준)
-plt.rcParams['font.family'] = 'Malgun Gothic'
+# ✅ 한글 폰트 설정
+font_path = "NanumGothic.ttf"  # 프로젝트 폴더에 이 파일이 있어야 함
+font_name = fm.FontProperties(fname=font_path).get_name()
+plt.rc('font', family=font_name)
 plt.rcParams['axes.unicode_minus'] = False
 
-st.set_page_config(page_title="자산 소비 분석 시스템", layout="wide")
-
-# ✅ 기본 카테고리
+# ✅ 데이터 파일 경로
+DATA_FILE = "monthly_spending.csv"
 categories = ["교통", "쇼핑", "식비", "여가", "카페"]
 
-# ✅ 세션 상태 초기화
-if "data" not in st.session_state:
-    st.session_state.data = {}
+# ✅ UI 구성
+st.title("📉 월별 지출 비교")
+month = st.sidebar.selectbox("월 선택", [f"{i}월" for i in range(1, 13)])
+budget = st.sidebar.slider("예산 (원)", 100000, 1000000, 300000, step=50000)
 
-# ✅ 제목
-st.title("💳 월간 소비 분석 자산 조언 시스템")
+st.subheader(f"📋 {month} 소비 입력")
+spending = {cat: st.number_input(f"{cat} 지출", min_value=0, step=1000, key=cat) for cat in categories}
 
-# ✅ 월 선택
-selected_month = st.selectbox("📅 지출 월을 선택하세요", [f"{i}월" for i in range(1, 13)])
+# ✅ 저장
+if st.button("저장"):
+    new_df = pd.DataFrame([{"month": month, "category": k, "amount": v} for k, v in spending.items()])
+    if os.path.exists(DATA_FILE):
+        old_df = pd.read_csv(DATA_FILE)
+        df = pd.concat([old_df, new_df], ignore_index=True)
+    else:
+        df = new_df
+    df.to_csv(DATA_FILE, index=False)
+    st.success("데이터 저장 완료")
 
-# ✅ 선택한 월의 기존 데이터 가져오기 (없으면 기본값 0)
-month_data = st.session_state.data.get(selected_month, {cat: 0 for cat in categories})
+# ✅ 초기화
+if st.button("초기화"):
+    if os.path.exists(DATA_FILE):
+        os.remove(DATA_FILE)
+        st.success("모든 데이터 초기화 완료")
 
-# ✅ 지출 입력
-st.subheader(f"💰 {selected_month} 지출 입력")
-updated_data = {}
-cols = st.columns(len(categories))
-for idx, cat in enumerate(categories):
-    updated_data[cat] = cols[idx].number_input(f"{cat} 지출 (원)", min_value=0, value=month_data.get(cat, 0), key=f"{selected_month}_{cat}")
+# ✅ 그래프
+if os.path.exists(DATA_FILE):
+    df = pd.read_csv(DATA_FILE)
+    pivot = df.pivot_table(index="category", columns="month", values="amount", aggfunc="sum", fill_value=0)
+    pivot = pivot.reindex(categories)
 
-# ✅ 저장 버튼
-if st.button("💾 저장"):
-    st.session_state.data[selected_month] = updated_data
-    st.success(f"{selected_month} 지출 내역이 저장되었습니다.")
-
-# ✅ 초기화 버튼
-if st.button("🔄 모든 데이터 초기화"):
-    st.session_state.data = {}
-    st.experimental_rerun()
-
-# ✅ 월별 지출 비교 그래프
-if st.session_state.data:
-    df = pd.DataFrame(st.session_state.data).T
-    df.index.name = "월"
-    df = df.sort_index()
-
-    st.markdown("### 📊 월별 지출 비교")
-
+    st.subheader("📊 월별 지출 비교")
     fig, ax = plt.subplots(figsize=(10, 5))
-    df.plot(kind="bar", ax=ax)
-    ax.set_ylabel("지출 금액")
+    pivot.plot(kind="bar", ax=ax)
     ax.set_xlabel("카테고리")
+    ax.set_ylabel("지출 금액")
+    ax.tick_params(axis='x', labelrotation=0)
     ax.legend(title="월")
-    ax.set_xticklabels(df.columns, rotation=0)
     st.pyplot(fig)
-
-    # ✅ 연간 평균 지출 계산
-    avg_by_category = df.mean().round(0)
-
-    # ✅ 연간 평균 그래프
-    st.markdown("### 📉 연간 평균 지출")
-    fig2, ax2 = plt.subplots(figsize=(8, 5))
-    bars = ax2.bar(avg_by_category.index, avg_by_category.values, color="salmon")
-    ax2.set_title("카테고리별 연간 평균 지출")
-    ax2.set_ylabel("지출 금액")
-    ax2.set_xlabel("카테고리")
-    ax2.set_xticks(range(len(avg_by_category.index)))
-    ax2.set_xticklabels(avg_by_category.index, rotation=0)
-    st.pyplot(fig2)
