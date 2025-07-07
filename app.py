@@ -25,9 +25,9 @@ st.write(f"### {month} 예산: {monthly_budget:,}원")
 
 spending_data = []
 st.subheader("📊 소비 내역 입력")
-for category in categories:
-    amount = st.number_input(f"{category} 지출 (원)", min_value=0, step=1_000, key=category)
-    spending_data.append({"month": month, "category": category, "amount": amount})
+for cat in categories:
+    amt = st.number_input(f"{cat} 지출 (원)", min_value=0, step=1_000, key=cat)
+    spending_data.append({"month": month, "category": cat, "amount": amt})
 
 # ─── 저장 및 분석 ──────────────────────────────────────────────────
 if st.button("저장 및 분석"):
@@ -40,15 +40,22 @@ if st.button("저장 및 분석"):
     df_all.to_csv(DATA_FILE, index=False)
     st.success(f"{month} 데이터가 저장되었습니다!")
 
-    # ─ 월별 지출 비교 (수평 막대) ─────────────────────────────────────
+    # ── 월별 지출 비교 (수평 막대) ──────────────────────────────────
     st.subheader("📊 월별 지출 비교 (수평)")
+
+    # Pivot & 재정렬
     pivot = df_all.pivot_table(
-        index="category",
-        columns="month",
-        values="amount",
-        aggfunc="sum",
-        fill_value=0
+        index="category", columns="month", values="amount",
+        aggfunc="sum", fill_value=0
     )
+    # 1) 카테고리 순서 고정
+    pivot = pivot.reindex(index=categories)
+    # 2) 월 순서 고정
+    month_order = [f"{i}월" for i in range(1, 13)]
+    cols = [m for m in month_order if m in pivot.columns]
+    pivot = pivot[cols]
+
+    # Plot
     fig, ax = plt.subplots(figsize=(10, 6))
     pivot.plot(kind="barh", ax=ax)
     ax.set_xlabel("지출 금액 (원)", fontproperties=fontprop)
@@ -58,15 +65,15 @@ if st.button("저장 및 분석"):
     plt.tight_layout()
     st.pyplot(fig)
 
-    # ─ 연간 평균 지출 ────────────────────────────────────────────────
+    # ── 연간 평균 지출 ───────────────────────────────────────────────
     st.subheader("📊 연간 평균 지출")
-    avg_df = df_all.groupby("category")["amount"].mean()
-    fig_avg, ax_avg = plt.subplots(figsize=(10, 4))
-    avg_df.plot(kind="bar", ax=ax_avg)
-    ax_avg.set_ylabel("지출 금액 (원)", fontproperties=fontprop)
-    ax_avg.set_title("📊 카테고리별 연간 평균 지출", fontproperties=fontprop)
+    avg_df = df_all.groupby("category")["amount"].mean().reindex(categories)
+    fig2, ax2 = plt.subplots(figsize=(10, 4))
+    avg_df.plot(kind="bar", ax=ax2)
+    ax2.set_ylabel("지출 금액 (원)", fontproperties=fontprop)
+    ax2.set_title("📊 카테고리별 연간 평균 지출", fontproperties=fontprop)
     plt.xticks(rotation=0, fontproperties=fontprop)
-    st.pyplot(fig_avg)
+    st.pyplot(fig2)
 
 # ─── 초기화 ────────────────────────────────────────────────────────
 if st.button("초기화"):
