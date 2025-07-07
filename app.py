@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
+import numpy as np
 import os
 
 # ✅ 폰트 설정
@@ -104,40 +105,32 @@ if col2.button("🗑️ 전체 초기화"):
 # ✅ 최근 비교할 월 수 선택
 compare_n = st.sidebar.selectbox("📅 비교할 최근 월 수", [1, 3, 6, 9, 12])
 
-# ✅ 월별 비교 그래프
+# ✅ 하나의 그래프: 최근 월별 지출 + 연간 평균
 if not df_all.empty:
-    st.subheader("📊 월별 지출 비교")
+    st.subheader("📊 최근 월별 지출 + 연간 평균 (하나의 그래프)")
+
     recent_months = sorted(df_all["month"].unique(), key=lambda x: int(x.replace("월", "")))[-compare_n:]
     pivot = df_all[df_all["month"].isin(recent_months)].pivot_table(index="category", columns="month", values="amount", aggfunc="sum", fill_value=0)
-    
-    fig2, ax2 = plt.subplots(figsize=(10, 5))
-    pivot.plot(kind="bar", ax=ax2)
 
-    ax2.set_xlabel("지출 항목", fontproperties=fontprop)
-    ax2.set_ylabel("지출 금액", fontproperties=fontprop)
-    ax2.set_title("월별 지출 비교", fontproperties=fontprop)
-    plt.xticks(rotation=0, fontproperties=fontprop)
-    plt.yticks(fontproperties=fontprop)
-    plt.legend(prop=fontprop)
-    plt.tight_layout()
-    st.pyplot(fig2)
-
-    # ✅ 연간 평균 지출 그래프
-    st.subheader("📉 연간 평균 지출 (카테고리별)")
     full_months = [f"{i}월" for i in range(1, 13)]
     filtered_df = df_all[df_all["month"].isin(full_months)]
+    avg_df = filtered_df.groupby("category")["amount"].mean()
 
-    if not filtered_df.empty:
-        avg_df = filtered_df.groupby("category")["amount"].mean().reset_index()
-        fig3, ax3 = plt.subplots(figsize=(8, 4))
-        ax3.bar(avg_df["category"], avg_df["amount"], color='skyblue')
+    fig, ax = plt.subplots(figsize=(10, 5))
+    bar_width = 0.8 / len(recent_months)
+    x = np.arange(len(pivot.index))
 
-        ax3.set_xlabel("지출 항목", fontproperties=fontprop)
-        ax3.set_ylabel("평균 지출 금액", fontproperties=fontprop)
-        ax3.set_title("1~12월 연간 평균 지출", fontproperties=fontprop)
-        plt.xticks(fontproperties=fontprop)
-        plt.yticks(fontproperties=fontprop)
-        plt.tight_layout()
-        st.pyplot(fig3)
-    else:
-        st.info("💡 1~12월 월별 지출 데이터가 충분하지 않아 평균을 계산할 수 없습니다.")
+    for i, month in enumerate(recent_months):
+        ax.bar(x + i * bar_width, pivot[month], width=bar_width, label=month)
+
+    ax.plot(x + bar_width * (len(recent_months) - 1) / 2, avg_df[pivot.index], 
+            color='red', marker='o', linestyle='-', label='연간 평균')
+
+    ax.set_xticks(x + bar_width * (len(recent_months) - 1) / 2)
+    ax.set_xticklabels(pivot.index, fontproperties=fontprop)
+    ax.set_ylabel("지출 금액", fontproperties=fontprop)
+    ax.set_title("최근 월별 지출 + 연간 평균", fontproperties=fontprop)
+    ax.legend(prop=fontprop)
+    plt.grid(True, axis='y')
+    plt.tight_layout()
+    st.pyplot(fig)
