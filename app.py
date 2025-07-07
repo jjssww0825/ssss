@@ -119,7 +119,10 @@ if st.button("저장 및 분석"):
     ax2.set_xticks(x + bar_width * (len(months) - 1) / 2)
     ax2.set_xticklabels(categories_list, fontproperties=fontprop)
     ax2.set_ylabel("지출 금액", fontproperties=fontprop)
-    ax2.legend(prop=fontprop)
+
+    # ✅ 범례 위치 오른쪽 바깥으로 이동
+    ax2.legend(prop=fontprop, loc='upper left', bbox_to_anchor=(1.02, 1))
+
     st.pyplot(fig2)
 
 # ✅ 원형 그래프
