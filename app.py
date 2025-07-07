@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
+import numpy as np
 import os
 
 # ✅ 한글 폰트 설정
@@ -81,21 +82,21 @@ if st.button("저장 및 분석"):
     df_all.to_csv(DATA_FILE, index=False)
     st.success(f"{month} 데이터가 저장되었습니다!")
 
+    # ✅ 막대그래프 (겹치지 않게 조정)
     st.subheader("📊 월별 지출 비교")
     pivot = df_all.pivot_table(index="category", columns="month", values="amount", aggfunc="sum", fill_value=0)
-
-    # ✅ 막대그래프 수동 렌더링 (폰트 깨짐 방지)
     fig2, ax2 = plt.subplots(figsize=(10, 4))
-    months = pivot.columns
-    x = range(len(pivot.index))
-    bar_width = 0.35
 
-    for i, month_label in enumerate(months):
-        offset = (i - len(months)/2) * bar_width * 1.1
-        ax2.bar([xi + offset for xi in x], pivot[month_label], width=bar_width, label=month_label)
+    categories_list = list(pivot.index)
+    months = list(pivot.columns)
+    x = np.arange(len(categories_list))
+    bar_width = 0.8 / len(months)
 
-    ax2.set_xticks(x)
-    ax2.set_xticklabels(pivot.index, fontproperties=fontprop)
+    for i, m in enumerate(months):
+        ax2.bar(x + i * bar_width, pivot[m], width=bar_width, label=m)
+
+    ax2.set_xticks(x + bar_width * (len(months) - 1) / 2)
+    ax2.set_xticklabels(categories_list, fontproperties=fontprop)
     ax2.set_ylabel("지출 금액", fontproperties=fontprop)
     ax2.legend(prop=fontprop)
     st.pyplot(fig2)
